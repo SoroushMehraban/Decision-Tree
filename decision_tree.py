@@ -4,9 +4,11 @@ import pandas as pd
 
 
 class DecisionTree:
-    def __init__(self, data, number_of_folds, max_depth, min_size):
+    def __init__(self, data, number_of_folds, max_depth, min_size, cost_function='GINI'):
         self.max_depth = max_depth
         self.min_size = min_size
+        self.cost_function = cost_function
+
         self.dataset = None
         self.cross_validation_split(data, number_of_folds)
 
@@ -53,6 +55,17 @@ class DecisionTree:
             else:
                 self.dataset = np.vstack([self.dataset, fold])
 
+    def cost(self, groups):
+        if self.cost_function == "GINI":
+            return self.gini_index(groups)
+        elif self.cost_function == "ENTROPY":
+            return self.entropy(groups)
+        elif self.cost_function == "CLASSIFICATION ERROR":
+            return self.classification_error(groups)
+        else:
+            print("ERROR: INVALID COST FUNCTION")
+            exit()
+
     @staticmethod
     def gini_index(groups):
         # we remove last element from .shape when counting number of instances because we only care about labels in
@@ -75,6 +88,44 @@ class DecisionTree:
         return gini
 
     @staticmethod
+    def entropy(groups):
+        number_of_instances = np.prod(groups.shape[:-1])
+
+        entropy = 0
+        for group in groups:
+            group_size = group.shape[0]
+            if group_size == 0:
+                continue
+
+            group_classes = group[:, -1]
+            _, counts = np.unique(group_classes, return_counts=True)
+            p = counts / group_size
+            sigma = np.sum(p * np.log2(p))
+            group_weight = group_size / number_of_instances
+            entropy += (- sigma) * group_weight
+
+        return entropy
+
+    @staticmethod
+    def classification_error(groups):
+        number_of_instances = np.prod(groups.shape[:-1])
+
+        error = 0
+        for group in groups:
+            group_size = group.shape[0]
+            if group_size == 0:
+                continue
+
+            group_classes = group[:, -1]
+            _, counts = np.unique(group_classes, return_counts=True)
+            p = counts / group_size
+            max_p = np.max(p)
+            group_weight = group_size / number_of_instances
+            error += (1 - max_p) * group_weight
+
+        return error
+
+    @staticmethod
     def test_split(feature_index, value, data):
         left = data[data[:, feature_index] < value]
         right = data[data[:, feature_index] >= value]
@@ -85,9 +136,9 @@ class DecisionTree:
         for feature_index in range(data.shape[1] - 1):  # except last column
             for row in data:
                 groups = self.test_split(feature_index, row[feature_index], data)
-                gini = self.gini_index(groups)
-                if gini < best_score:
-                    best_index, best_value, best_score, best_groups = feature_index, row[feature_index], gini, groups
+                cost_score = self.cost(groups)
+                if cost_score < best_score:
+                    best_index, best_value, best_score, best_groups = feature_index, row[feature_index], cost_score, groups
         return {
             'index': best_index,
             'value': best_value,
@@ -143,6 +194,8 @@ class DecisionTree:
 
 if __name__ == '__main__':
     dataset = pd.read_csv('data_banknote_authentication.csv')
-    decision_tree = DecisionTree(dataset, number_of_folds=5, max_depth=5, min_size=10)
+    decision_tree = DecisionTree(dataset, number_of_folds=5, max_depth=5, min_size=10,
+                                 cost_function="ENTROPY")
     scores = decision_tree.run()
     print(scores)
+    print(np.mean(scores))
