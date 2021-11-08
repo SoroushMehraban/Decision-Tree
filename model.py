@@ -193,7 +193,7 @@ class DecisionTree:
 
 
 if __name__ == '__main__':
-    dataset = pd.read_csv('data_banknote_authentication.csv')
+    dataset = pd.read_csv('datasetes/data_banknote_authentication.csv')
     decision_tree = DecisionTree(dataset, number_of_folds=5, max_depth=5, min_size=10,
                                  cost_function="ENTROPY")
     scores = decision_tree.run()
