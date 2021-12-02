@@ -68,9 +68,7 @@ class DecisionTree:
 
     @staticmethod
     def gini_index(groups):
-        # we remove last element from .shape when counting number of instances because we only care about labels in
-        # each row
-        number_of_instances = np.prod(groups.shape[:-1])
+        number_of_instances = np.sum([group.shape[0] for group in groups])
 
         gini = 0
         for group in groups:
@@ -89,7 +87,7 @@ class DecisionTree:
 
     @staticmethod
     def entropy(groups):
-        number_of_instances = np.prod(groups.shape[:-1])
+        number_of_instances = np.sum([group.shape[0] for group in groups])
 
         entropy = 0
         for group in groups:
@@ -108,7 +106,7 @@ class DecisionTree:
 
     @staticmethod
     def classification_error(groups):
-        number_of_instances = np.prod(groups.shape[:-1])
+        number_of_instances = np.sum([group.shape[0] for group in groups])
 
         error = 0
         for group in groups:
