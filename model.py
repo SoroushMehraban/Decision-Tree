@@ -159,6 +159,7 @@ class DecisionTree:
             return
         if depth >= self.max_depth:
             node['left'], node['right'] = self.to_terminal(left), self.to_terminal(right)
+            return
 
         if left.shape[0] <= self.min_size:
             node['left'] = self.to_terminal(left)
